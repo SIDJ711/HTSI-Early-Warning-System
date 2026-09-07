@@ -1,0 +1,995 @@
+Build a realistic working web application called:
+
+"HTSI Early Warning System"
+
+Full form:
+Extreme Heatwave Early Warning + Human Thermal Stress Index
+
+IMPORTANT:
+This must NOT be a static mockup or fake dashboard.
+
+The application must use REAL-TIME WEATHER DATA and calculate HTSI dynamically from that data.
+
+==================================================
+1. CORE PRODUCT
+==================================================
+
+Build a functional heat-risk monitoring dashboard.
+
+The system should:
+
+1. Detect the user's current location using browser geolocation.
+2. Get latitude and longitude.
+3. Fetch real-time weather data for that location.
+4. Calculate HTSI dynamically using the real weather values.
+5. Display the current weather and HTSI.
+6. Display the thermal stress risk level.
+7. Display hourly forecast-based HTSI for the next 24 hours.
+8. Show the highest expected HTSI.
+9. Show when the highest-risk period is expected.
+10. Clearly indicate when data was last updated.
+11. Allow the user to manually search/select a city.
+12. Work for major Indian cities.
+13. Never display fake hardcoded weather values when API data is available.
+
+==================================================
+2. WEATHER DATA SOURCE
+==================================================
+
+Use Open-Meteo as the default weather provider.
+
+Open-Meteo forecast API:
+
+https://api.open-meteo.com/v1/forecast
+
+Use latitude and longitude dynamically.
+
+Request these current variables:
+
+temperature_2m
+relative_humidity_2m
+wind_speed_10m
+surface_pressure
+shortwave_radiation
+weather_code
+cloud_cover
+
+Also request hourly values for:
+
+temperature_2m
+relative_humidity_2m
+wind_speed_10m
+surface_pressure
+shortwave_radiation
+weather_code
+
+Use appropriate units:
+
+temperature_unit=celsius
+wind_speed_unit=ms
+pressure_unit=hPa
+
+Use timezone=auto.
+
+The application must NOT use fake weather values.
+
+==================================================
+3. LOCATION
+==================================================
+
+On first load:
+
+Ask for browser location permission.
+
+If permission is granted:
+
+Use navigator.geolocation.getCurrentPosition()
+
+Get:
+
+latitude
+longitude
+
+Then fetch weather for that location.
+
+Display:
+
+Current Location
+Latitude
+Longitude
+
+Example:
+
+Current Location
+New Delhi, India
+
+28.6139° N
+77.2090° E
+
+If reverse geocoding is needed, use a suitable geocoding API.
+
+Also provide a manual city search.
+
+Include common Indian cities:
+
+Delhi
+Mumbai
+Kolkata
+Chennai
+Bengaluru
+Hyderabad
+Ahmedabad
+Jaipur
+Lucknow
+Patna
+Pune
+Bhubaneswar
+Guwahati
+
+The user should be able to switch location.
+
+==================================================
+4. REAL-TIME WEATHER API SERVICE
+==================================================
+
+Create a dedicated backend service:
+
+/api/weather/current
+
+Input:
+
+latitude
+longitude
+
+Backend fetches weather data from Open-Meteo.
+
+Return normalized JSON:
+
+{
+  "location": {
+    "latitude": 28.6139,
+    "longitude": 77.2090
+  },
+  "timestamp": "...",
+  "temperature_c": 34.2,
+  "relative_humidity_pct": 62,
+  "wind_speed_ms": 2.8,
+  "pressure_hpa": 1003.4,
+  "solar_radiation_wm2": 640,
+  "weather_code": 1,
+  "source": "Open-Meteo"
+}
+
+Do NOT expose unnecessary API implementation details to the frontend.
+
+==================================================
+5. REAL-TIME HTSI CALCULATION
+==================================================
+
+Create a dedicated HTSI calculation module.
+
+File/module:
+
+htsi.ts
+
+or
+
+htsi.py
+
+depending on the selected backend.
+
+Input:
+
+temperature_c
+relative_humidity_pct
+wind_speed_ms
+solar_radiation_wm2
+
+Return:
+
+{
+  "htsi": number,
+  "risk_level": string,
+  "risk_color": string,
+  "description": string
+}
+
+IMPORTANT:
+
+Do NOT invent random numbers.
+
+Use the project's existing HTSI methodology if it already exists.
+
+If an existing HTSI formula is not available, create a clearly documented baseline formula and mark it as:
+
+"Prototype HTSI model"
+
+Do not present an invented formula as an official medical or government heat index.
+
+Keep all thresholds and weights centralized in one configuration file:
+
+htsi_config
+
+Example:
+
+HTSI_THRESHOLDS
+HTSI_WEIGHTS
+NORMALIZATION_RANGES
+
+Do not scatter magic numbers throughout the application.
+
+==================================================
+6. HTSI INPUTS
+==================================================
+
+HTSI should use these environmental variables:
+
+Temperature
+Relative Humidity
+Wind Speed
+Solar Radiation
+
+Optional supporting variable:
+
+Surface Pressure
+
+The UI must explicitly show these four major contributors.
+
+Example:
+
+Temperature       34.2 °C
+Humidity          62 %
+Wind Speed        2.8 m/s
+Solar Radiation   640 W/m²
+
+==================================================
+7. CURRENT HTSI CARD
+==================================================
+
+Create a large central HTSI card.
+
+Example:
+
+HUMAN THERMAL STRESS INDEX
+
+72.4
+
+HIGH RISK
+
+Updated 2 minutes ago
+
+The number must be calculated from the REAL current weather API values.
+
+Do not hardcode 72.4.
+
+Use a visual gauge.
+
+Gauge should show:
+
+Low
+Moderate
+High
+Very High
+Extreme
+
+Use smooth transitions.
+
+==================================================
+8. RISK LEVEL
+==================================================
+
+Create risk categories based on the HTSI configuration.
+
+Example structure:
+
+LOW
+MODERATE
+HIGH
+VERY HIGH
+EXTREME
+
+Do not use colors alone to communicate risk.
+
+Always display:
+
+Risk level text
+HTSI value
+Short explanation
+
+Example:
+
+HIGH RISK
+
+Heat stress conditions are elevated.
+Outdoor exposure should be reduced,
+especially during peak afternoon hours.
+
+==================================================
+9. LIVE WEATHER PANEL
+==================================================
+
+Create a "Live Environmental Conditions" card.
+
+Display:
+
+Temperature
+Humidity
+Wind Speed
+Solar Radiation
+Pressure
+Weather condition
+
+Example:
+
+LIVE CONDITIONS
+
+🌡 Temperature
+34.2 °C
+
+💧 Humidity
+62 %
+
+💨 Wind
+2.8 m/s
+
+☀ Solar Radiation
+640 W/m²
+
+Pressure
+1003 hPa
+
+Weather
+Partly Cloudy
+
+Every value must come from the real weather API.
+
+==================================================
+10. 24-HOUR FORECAST
+==================================================
+
+Fetch hourly forecast data.
+
+Calculate HTSI independently for every forecast hour.
+
+For each hour:
+
+temperature
+humidity
+wind
+solar radiation
+
+→ HTSI
+
+Display a line chart:
+
+Time vs HTSI
+
+Example:
+
+NOW     72
+10 PM   69
+11 PM   65
+12 AM   61
+...
+2 PM    89
+3 PM    92
+
+The chart must use actual calculated HTSI values.
+
+Do NOT use random graph values.
+
+Highlight the peak HTSI.
+
+Example:
+
+PEAK RISK
+
+92.4 HTSI
+
+Expected around 2:00 PM
+
+==================================================
+11. EARLY WARNING
+==================================================
+
+Create a prominent warning section.
+
+If forecast HTSI crosses the configured high-risk threshold:
+
+Show:
+
+⚠ EARLY WARNING
+
+Elevated thermal stress expected.
+
+Peak risk:
+2:00 PM – 4:00 PM
+
+Expected HTSI:
+92.4
+
+Recommended action:
+
+Avoid prolonged outdoor exposure
+during the peak heat period.
+
+If no threshold is crossed:
+
+Show:
+
+✓ No significant thermal stress warning expected
+within the next 24 hours.
+
+This warning must be generated from the forecast data.
+
+==================================================
+12. HEATWAVE DETECTION
+==================================================
+
+Create a simple prototype heatwave detection layer.
+
+Do not claim official IMD heatwave certification.
+
+Use language:
+
+"Prototype heat-risk warning"
+
+not:
+
+"Official Heatwave Warning"
+
+Detect persistent high-temperature / high-HTSI conditions over consecutive forecast periods.
+
+Display:
+
+Heatwave Risk:
+LOW / MODERATE / HIGH
+
+==================================================
+13. DATA SOURCE INDICATOR
+==================================================
+
+Very important.
+
+Show:
+
+● LIVE DATA
+
+Source:
+Open-Meteo
+
+Last updated:
+2 minutes ago
+
+Also show:
+
+Data timestamp
+
+This makes it obvious that the dashboard is not showing static demo data.
+
+==================================================
+14. AUTO REFRESH
+==================================================
+
+Refresh current weather automatically every 5 minutes.
+
+Do not continuously spam the API.
+
+When refreshing:
+
+Show a subtle loading indicator.
+
+Example:
+
+Updating weather...
+
+After successful update:
+
+Updated just now
+
+If API fails:
+
+Weather update unavailable.
+
+Last successful update:
+10:42 PM
+
+Keep displaying the last successful data instead of breaking the dashboard.
+
+==================================================
+15. OFFLINE / ERROR HANDLING
+==================================================
+
+Handle:
+
+API failure
+Network failure
+Location permission denied
+Invalid coordinates
+Missing weather data
+Rate limits
+
+If location permission is denied:
+
+Show:
+
+Location access unavailable.
+
+Choose a city manually.
+
+Provide city selector.
+
+Never crash the dashboard.
+
+==================================================
+16. UI DESIGN
+==================================================
+
+Design should look like a serious climate-tech / emergency monitoring platform.
+
+NOT like a generic SaaS landing page.
+
+Avoid excessive gradients.
+
+Avoid fake glassmorphism everywhere.
+
+Use:
+
+Dark navy / charcoal background
+Clean cards
+Clear typography
+Subtle borders
+Minimal shadows
+Strong visual hierarchy
+
+Primary interface:
+
+Dark mode by default.
+
+Also provide a Light/Dark mode toggle.
+
+==================================================
+17. DARK MODE / TEXT VISIBILITY
+==================================================
+
+VERY IMPORTANT:
+
+Every piece of text must remain readable in both light and dark mode.
+
+Never use:
+
+white text on white background
+black text on dark background
+low-contrast gray text
+
+Define design tokens.
+
+Example:
+
+Dark mode:
+
+--background: #0B1120
+--card: #111827
+--card-secondary: #172033
+--text-primary: #F8FAFC
+--text-secondary: #CBD5E1
+--text-muted: #94A3B8
+--border: #263244
+
+Light mode:
+
+--background: #F8FAFC
+--card: #FFFFFF
+--card-secondary: #F1F5F9
+--text-primary: #0F172A
+--text-secondary: #334155
+--text-muted: #64748B
+--border: #CBD5E1
+
+Make sure charts, badges, tooltips, dropdowns and modal windows also respect the theme.
+
+Do not hardcode text colors inside individual components.
+
+Use CSS variables / theme tokens.
+
+==================================================
+18. DASHBOARD LAYOUT
+==================================================
+
+Desktop:
+
+Sidebar + Main Dashboard
+
+Sidebar:
+
+HTSI Early Warning
+Dashboard
+Live Monitoring
+Forecast
+Risk Map
+Data Sources
+Settings
+
+Main:
+
+Top bar:
+
+Location
+Last updated
+Live status
+Dark/light mode
+
+Then:
+
+Current HTSI
+Risk Level
+Live Weather
+
+Then:
+
+24-hour HTSI Forecast
+
+Then:
+
+Early Warning
+
+Then:
+
+Environmental Factors
+
+Then:
+
+Data Source / Methodology
+
+==================================================
+19. MOBILE RESPONSIVENESS
+==================================================
+
+The application must work on:
+
+Desktop
+Laptop
+Tablet
+Mobile
+
+On mobile:
+
+Sidebar becomes bottom navigation or hamburger menu.
+
+Cards stack vertically.
+
+Charts resize properly.
+
+==================================================
+20. MAP
+==================================================
+
+Add a simple map section.
+
+Show current location.
+
+Use:
+
+Leaflet + OpenStreetMap
+
+Do not require a paid map API.
+
+Show marker:
+
+Current Location
+
+Popup:
+
+HTSI:
+72.4
+
+Risk:
+HIGH
+
+Temperature:
+34.2°C
+
+The map should update when location changes.
+
+==================================================
+21. TECH STACK
+==================================================
+
+Preferred:
+
+Frontend:
+React
+TypeScript
+Tailwind CSS
+Recharts
+
+Backend:
+FastAPI OR Node/Express
+
+If using a single-stack environment, keep API routes server-side.
+
+Weather fetching must happen through the backend/server layer where practical.
+
+Use clean modular architecture.
+
+==================================================
+22. PROJECT STRUCTURE
+==================================================
+
+Use something similar to:
+
+src/
+  components/
+    HtsiCard
+    WeatherCard
+    RiskBadge
+    ForecastChart
+    WarningPanel
+    LocationSelector
+    LiveIndicator
+    ThemeToggle
+    WeatherMap
+
+  services/
+    weatherService
+    htsiService
+    geocodingService
+
+  utils/
+    weatherCode
+    formatting
+
+  config/
+    htsiConfig
+
+  pages/
+    Dashboard
+    Forecast
+    Monitoring
+    Settings
+
+backend/
+  routes/
+    weather
+    forecast
+
+  services/
+    openMeteoService
+
+  models/
+    weather
+    htsi
+
+  htsi/
+    calculator
+    thresholds
+
+==================================================
+23. API FLOW
+==================================================
+
+Frontend:
+
+GET /api/weather/current?lat=28.6139&lon=77.2090
+
+Backend:
+
+1. Validate coordinates.
+2. Request Open-Meteo.
+3. Normalize response.
+4. Return weather data.
+
+Then:
+
+Frontend/backend calculates:
+
+HTSI(weather)
+
+Then return:
+
+{
+  "weather": {...},
+  "htsi": {
+    "value": 72.4,
+    "risk": "HIGH"
+  }
+}
+
+For forecast:
+
+GET /api/weather/forecast?lat=...&lon=...
+
+Return:
+
+hourly weather + calculated HTSI.
+
+==================================================
+24. FUTURE ML INTEGRATION
+==================================================
+
+The architecture must support replacing the basic forecast calculation with an ML model later.
+
+Do NOT tightly couple UI to XGBoost.
+
+Create:
+
+ForecastProvider interface
+
+Possible implementations:
+
+WeatherForecastProvider
+XGBoostForecastProvider
+GRUForecastProvider
+
+Current version:
+
+Real weather API
+→ HTSI calculator
+
+Future version:
+
+Weather API
+→ ML forecast
+→ HTSI
+→ Warning
+
+The UI should not need major changes when ML is added.
+
+==================================================
+25. EXISTING XGBOOST MODEL
+==================================================
+
+If an existing trained model exists:
+
+artifacts/xgboost_htsi.pkl
+
+allow the backend to load it.
+
+But do NOT force the application to use it if the model requires unavailable inputs.
+
+The current real-time pipeline should first work correctly using:
+
+temperature
+humidity
+wind
+solar radiation
+
+Then integrate XGBoost.
+
+Do not fake model predictions.
+
+If the model is unavailable:
+
+display:
+
+"Real-time physics/rule-based HTSI"
+
+instead of pretending ML is running.
+
+==================================================
+26. DATA TRANSPARENCY
+==================================================
+
+Every dashboard should make clear:
+
+Data source:
+Open-Meteo
+
+Calculation:
+HTSI prototype model
+
+Forecast:
+Weather-provider forecast
+
+ML prediction:
+Only show when an actual model is loaded.
+
+Never claim:
+
+"AI prediction"
+
+unless an actual ML model is being executed.
+
+==================================================
+27. LOADING STATES
+==================================================
+
+On initial load:
+
+Detecting location...
+
+Fetching live weather...
+
+Calculating HTSI...
+
+Then:
+
+LIVE
+
+Avoid blank screens.
+
+Use skeleton loaders.
+
+==================================================
+28. SAMPLE FALLBACK
+==================================================
+
+For development only, create a mock data provider.
+
+But:
+
+MOCK DATA MUST NEVER BE USED SILENTLY.
+
+Show:
+
+DEMO MODE
+
+if mock data is active.
+
+Production/default mode must use live weather data.
+
+==================================================
+29. ACCESSIBILITY
+==================================================
+
+Use:
+
+ARIA labels
+keyboard navigation
+proper contrast
+readable font sizes
+visible focus states
+
+Risk must not be communicated only through color.
+
+==================================================
+30. FINAL ACCEPTANCE TEST
+==================================================
+
+Before considering the application complete, verify:
+
+1. Browser asks for location.
+2. Latitude/longitude are obtained.
+3. Real weather API request is made.
+4. Temperature changes when location changes.
+5. Humidity changes when location changes.
+6. Wind changes when location changes.
+7. Solar radiation changes based on current conditions/time.
+8. HTSI changes when weather values change.
+9. 24-hour forecast chart uses calculated values.
+10. Peak HTSI is calculated from forecast.
+11. Warning changes based on forecast.
+12. Last updated time is visible.
+13. Data source is visible.
+14. API failure does not crash the app.
+15. Manual city selection works.
+16. Dark mode works.
+17. Light mode works.
+18. ALL TEXT IS READABLE IN BOTH THEMES.
+19. Mobile layout works.
+20. No fake weather values are displayed in production mode.
+21. No fake ML predictions are displayed.
+22. Demo/mock mode is clearly labeled.
+23. HTSI calculation is centralized and testable.
+
+==================================================
+31. MOST IMPORTANT RULE
+==================================================
+
+DO NOT build a static visual demo.
+
+Build a working prototype where:
+
+REAL LOCATION
+      ↓
+REAL WEATHER API
+      ↓
+REAL WEATHER VALUES
+      ↓
+REAL HTSI CALCULATION
+      ↓
+REAL RISK LEVEL
+      ↓
+REAL FORECAST-BASED WARNING
+
+The dashboard should feel like a real operational early-warning system rather than a presentation mockup.

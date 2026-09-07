@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: weather
+    description: Live weather and thermal stress monitoring
 paths:
   /healthz:
     get:
@@ -24,7 +26,82 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /weather/current:
+    get:
+      operationId: getWeatherCurrent
+      tags: [weather]
+      summary: Get current weather and HTSI
+      description: Fetches current conditions from Open-Meteo and calculates the prototype Human Thermal Stress Index.
+      parameters:
+        - $ref: "#/components/parameters/Latitude"
+        - $ref: "#/components/parameters/Longitude"
+      responses:
+        "200":
+          description: Current weather and calculated HTSI
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherCurrentResponse"
+        "400":
+          description: Invalid coordinates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Weather provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /weather/forecast:
+    get:
+      operationId: getWeatherForecast
+      tags: [weather]
+      summary: Get a 24-hour HTSI forecast
+      description: Fetches hourly conditions from Open-Meteo and calculates HTSI for each forecast hour.
+      parameters:
+        - $ref: "#/components/parameters/Latitude"
+        - $ref: "#/components/parameters/Longitude"
+      responses:
+        "200":
+          description: Forecast weather and calculated HTSI values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherForecastResponse"
+        "400":
+          description: Invalid coordinates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Weather provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
+  parameters:
+    Latitude:
+      name: lat
+      in: query
+      required: true
+      description: Latitude in decimal degrees
+      schema:
+        type: number
+        minimum: -90
+        maximum: 90
+    Longitude:
+      name: lon
+      in: query
+      required: true
+      description: Longitude in decimal degrees
+      schema:
+        type: number
+        minimum: -180
+        maximum: 180
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +110,129 @@ components:
           type: string
       required:
         - status
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    Location:
+      type: object
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
+        timezone:
+          type: string
+      required: [latitude, longitude, timezone]
+    HtsiAssessment:
+      type: object
+      properties:
+        value:
+          type: number
+        risk_level:
+          type: string
+          enum: [LOW, MODERATE, HIGH, VERY_HIGH, EXTREME]
+        risk_color:
+          type: string
+        description:
+          type: string
+      required: [value, risk_level, risk_color, description]
+    WeatherSnapshot:
+      type: object
+      properties:
+        temperature_c:
+          type: number
+        relative_humidity_pct:
+          type: number
+        wind_speed_ms:
+          type: number
+        pressure_hpa:
+          type: number
+        solar_radiation_wm2:
+          type: number
+        cloud_cover_pct:
+          type: number
+        weather_code:
+          type: integer
+        weather_label:
+          type: string
+      required:
+        - temperature_c
+        - relative_humidity_pct
+        - wind_speed_ms
+        - pressure_hpa
+        - solar_radiation_wm2
+        - cloud_cover_pct
+        - weather_code
+        - weather_label
+    WeatherCurrentResponse:
+      type: object
+      properties:
+        location:
+          $ref: "#/components/schemas/Location"
+        timestamp:
+          type: string
+        source:
+          type: string
+        calculation:
+          type: string
+        weather:
+          $ref: "#/components/schemas/WeatherSnapshot"
+        htsi:
+          $ref: "#/components/schemas/HtsiAssessment"
+      required: [location, timestamp, source, calculation, weather, htsi]
+    ForecastPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        weather:
+          $ref: "#/components/schemas/WeatherSnapshot"
+        htsi:
+          $ref: "#/components/schemas/HtsiAssessment"
+      required: [timestamp, weather, htsi]
+    ForecastWarning:
+      type: object
+      properties:
+        active:
+          type: boolean
+        title:
+          type: string
+        message:
+          type: string
+        action:
+          type: string
+        peak_value:
+          type: number
+        peak_timestamp:
+          type: string
+        peak_window:
+          type: string
+      required: [active, title, message, action, peak_value, peak_timestamp, peak_window]
+    WeatherForecastResponse:
+      type: object
+      properties:
+        location:
+          $ref: "#/components/schemas/Location"
+        generated_at:
+          type: string
+        source:
+          type: string
+        calculation:
+          type: string
+        points:
+          type: array
+          items:
+            $ref: "#/components/schemas/ForecastPoint"
+        peak:
+          $ref: "#/components/schemas/ForecastPoint"
+        warning:
+          $ref: "#/components/schemas/ForecastWarning"
+        heatwave_risk:
+          type: string
+          enum: [LOW, MODERATE, HIGH]
+      required: [location, generated_at, source, calculation, points, peak, warning, heatwave_risk]
 

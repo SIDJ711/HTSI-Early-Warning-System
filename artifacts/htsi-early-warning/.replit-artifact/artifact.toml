@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "HTSI Early Warning System"
+description = "A live climate-risk monitoring dashboard that uses Open-Meteo weather data to calculate a transparent prototype Human Thermal Stress Index, forecast peak risk, and surface early warnings for any location."
+version = "1.0.0"
+id = "artifacts/htsi-early-warning"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22735
+
+[services.development]
+run = "pnpm --filter @workspace/htsi-early-warning run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/htsi-early-warning", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/htsi-early-warning/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22735"
+BASE_PATH = "/"

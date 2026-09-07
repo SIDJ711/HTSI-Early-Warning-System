@@ -1,6 +1,6 @@
-# [Project name]
+# HTSI Early Warning System
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Live heat-risk monitoring dashboard that turns Open-Meteo observations into a transparent prototype Human Thermal Stress Index and forecast-based warning signal.
 
 ## Run & Operate
 
@@ -22,15 +22,24 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/htsi-early-warning/src/pages/dashboard.tsx` — responsive live monitoring dashboard
+- `artifacts/htsi-early-warning/src/index.css` — light/dark theme tokens and dashboard styling
+- `artifacts/api-server/src/services/openMeteoService.ts` — Open-Meteo fetch, normalization, and forecast warning logic
+- `artifacts/api-server/src/htsi/` — centralized prototype HTSI model configuration and calculator
+- `lib/api-spec/openapi.yaml` — source of truth for weather API contracts
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Weather data is fetched server-side from Open-Meteo and returned through normalized `/api/weather/current` and `/api/weather/forecast` endpoints.
+- The prototype HTSI model is rule-based and centralized so its thresholds and weights can be replaced by an ML provider later without changing the UI contract.
+- The browser uses geolocation on first load, with an Indian city selector as the explicit fallback; no weather values are silently mocked.
+- The location panel uses Leaflet with OpenStreetMap tiles and displays the same live HTSI snapshot in the marker popup.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Live current temperature, humidity, wind, pressure, solar radiation, cloud cover, and weather condition.
+- Calculated HTSI gauge, readable risk level, 24-hour forecast chart, peak period, early warning, and prototype heatwave risk.
+- Open-Meteo/source transparency, last-updated timestamp, light/dark themes, responsive mobile navigation, and error/retry handling.
 
 ## User preferences
 
@@ -38,7 +47,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Run OpenAPI codegen after changing `lib/api-spec/openapi.yaml`; the frontend imports the generated hooks from `@workspace/api-client-react`.
+- Open-Meteo timestamps returned with `timezone=auto` are local wall-clock strings without an offset; the dashboard formats them directly instead of letting `Date` reinterpret them as UTC.
 
 ## Pointers
 

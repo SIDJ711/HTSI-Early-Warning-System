@@ -1,0 +1,1 @@
+- [Open-Meteo timestamps](open-meteo-timezones.md) — auto-timezone forecast strings are local wall-clock values; do not let Date reinterpret them as UTC.
